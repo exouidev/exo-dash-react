@@ -4,6 +4,9 @@
 
 Welcome to **Exo UI**, a premium, beautifully crafted React dashboard template designed with developer experience in mind. It leverages the latest React 19 features alongside Tailwind CSS v4 for ultimate customizability.
 
+> **🅰️ Looking for the Angular version?** 
+> We also maintain a purely Angular version of this dashboard built with Standalone Components, Signals, and Functional Routing. **[Check out Exo UI Angular here](https://github.com/exouidev/exo-dash-angular)**.
+
 📚 **[View the Official Documentation](https://exoui.dev/documentation)**
 
 ## 🚀 Setup Guide (React)
