@@ -3,14 +3,7 @@ import { Outlet } from "react-router-dom"
 export function AuthLayout() {
   return (
     <div className="flex min-h-screen grid-cols-2 lg:grid w-full">
-      <div className="fixed top-0 inset-x-0 z-50 bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground shadow-sm">
-        Ready to build your next project?
-        <button onClick={() => window.open('https://exoui.dev')} className="ml-1 font-bold tracking-wide underline underline-offset-2 transition-opacity hover:opacity-80 cursor-pointer">
-          Get Template &rarr;
-        </button>
-      </div>
-
-      <div className="relative hidden lg:flex flex-col justify-between p-10 text-white overflow-hidden pt-16">
+      <div className="relative hidden lg:flex flex-col justify-between p-10 text-white overflow-hidden pt-24">
         <div className="absolute inset-0 bg-zinc-900">
           <img
             src="https://images.unsplash.com/photo-1638625864149-ba4396c78274?q=80&w=1364&auto=format&fit=crop"
@@ -43,8 +36,8 @@ export function AuthLayout() {
         </div>
       </div>
 
-      <div className="relative flex flex-col justify-center items-center p-8 bg-background w-full pt-20">
-        <div className="absolute top-16 left-8 lg:hidden flex items-center text-lg font-medium">
+      <div className="relative flex flex-col justify-center items-center p-8 bg-background w-full pt-28">
+        <div className="absolute top-24 left-8 lg:hidden flex items-center text-lg font-medium">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
