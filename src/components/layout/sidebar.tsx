@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTheme } from "../../hooks/use-theme"
 import { NavLink } from "react-router-dom"
 import { useSidebar } from "../../hooks/use-sidebar"
 import { cn } from "../../lib/utils"
@@ -88,8 +89,11 @@ const navGroups: NavGroup[] = [
 export function Sidebar() {
   const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar()
   
-  const [showProModal, setShowProModal] = useState(false)
+  const [showProModal, setShowProModal] = useState<string | null>(null)
   const [showFeaturesModal, setShowFeaturesModal] = useState(false)
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark' | null>(null)
+  const { theme } = useTheme()
+  const displayTheme = previewTheme || (theme === 'dark' ? 'dark' : 'light')
 
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ 'Dashboards': true })
 
@@ -141,7 +145,7 @@ export function Sidebar() {
                   <NavLink
                     key={lIdx}
                     to={link.href!}
-                    onClick={(e) => { if (link.isPro) { e.preventDefault(); setShowProModal(true); } else { setMobileOpen(false) } }}
+                    onClick={(e) => { if (link.isPro) { e.preventDefault(); setShowProModal(link.label.toLowerCase().replace(/ /g, '-')); } else { setMobileOpen(false) } }}
                     className={({ isActive }) => cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all w-full text-left",
                       (isActive && !link.isPro) ? "bg-sidebar-accent text-sidebar-accent-foreground" 
@@ -181,7 +185,7 @@ export function Sidebar() {
                            <NavLink
                              key={cIdx}
                              to={child.href}
-                             onClick={(e) => { if (child.isPro) { e.preventDefault(); setShowProModal(true); } else { setMobileOpen(false) } }}
+                             onClick={(e) => { if (child.isPro) { e.preventDefault(); setShowProModal(child.label.toLowerCase().replace(/ /g, '-')); } else { setMobileOpen(false) } }}
                              className={({ isActive }) => cn(
                                "rounded-md px-2 py-1.5 text-sm transition-all whitespace-nowrap",
                                (isActive && !child.isPro) ? "text-sidebar-foreground font-medium bg-sidebar-accent/30"
@@ -306,22 +310,59 @@ export function Sidebar() {
     </div>
       </aside>
 
-      {/* PRO PAYWALL MODAL */}
+      {/* PRO MODAL */}
       {showProModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 text-left" onClick={() => setShowProModal(false)}>
-          <div className="bg-card w-full max-w-md rounded-xl border shadow-xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="p-6 text-center space-y-4 shadow-sm border-b">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 text-left" onClick={() => { setShowProModal(null); setPreviewTheme(null); }}>
+          <div className="bg-card w-full max-w-[800px] rounded-xl border shadow-xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col md:flex-row relative">
+              
+              {/* Image Preview Area */}
+              <div className="w-full md:w-3/5 bg-accent/20 flex items-center justify-center relative overflow-hidden hidden md:flex border-r border-border">
+                <img 
+                  src={"/screenshots/" + showProModal + "-" + displayTheme + ".jpg"} 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  alt={showProModal + " preview"}
+                  className="w-full h-full object-cover object-left-top shadow-sm max-h-[500px]"
+                />
+                
+                {/* Theme Toggle Overlay */}
+                <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm border rounded-lg p-1 shadow-sm flex items-center gap-1 z-10">
+                  <button 
+                    onClick={() => setPreviewTheme('light')}
+                    className={"p-1.5 rounded-md flex items-center justify-center transition-colors " + (displayTheme === 'light' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/70 hover:bg-muted')}
+                    title="Light Mode"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                  </button>
+                  <button 
+                    onClick={() => setPreviewTheme('dark')}
+                    className={"p-1.5 rounded-md flex items-center justify-center transition-colors " + (displayTheme === 'dark' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/70 hover:bg-muted')}
+                    title="Dark Mode"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                  </button>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold tracking-tight mb-2 text-foreground">Pro Feature Locked</h2>
-                <p className="text-sm text-foreground/70">Unlock this feature and access advanced dashboards, and 10+ premium applications with Exo UI Pro.</p>
+
+              {/* Modal Content */}
+              <div className="w-full md:w-2/5 flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight mb-2 text-foreground capitalize">{showProModal.replace(/-/g, ' ')} Locked</h2>
+                  <p className="text-sm text-foreground/70 mb-4">Unlock this feature and access advanced dashboards, and 10+ premium applications with Exo UI Pro.</p>
+                  
+                  <div className="flex flex-col gap-2 mt-6 w-full">
+                    <a href="https://exoui.dev" target="_blank" rel="noopener noreferrer" className="w-full py-2.5 px-4 text-sm font-bold bg-primary text-primary-foreground rounded-md shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                       Unlock Exo UI Pro <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </a>
+                    <button className="w-full py-2.5 px-4 text-sm font-medium border border-border hover:bg-muted rounded-md transition-colors cursor-pointer" onClick={() => { setShowProModal(null); setPreviewTheme(null); }}>
+                      Maybe Later
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="p-4 bg-muted/50 flex justify-end gap-2 text-foreground border-t shadow-sm">
-              <button className="px-4 py-2 text-sm font-medium border hover:bg-black/5 rounded-md transition-colors cursor-pointer" onClick={() => setShowProModal(false)}>Close</button>
-              <a href="https://exoui.dev" target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md shadow-sm hover:opacity-90 transition-opacity flex items-center">Unlock Exo UI Pro</a>
             </div>
           </div>
         </div>
