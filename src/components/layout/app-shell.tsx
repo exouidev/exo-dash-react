@@ -4,6 +4,7 @@ import { SidebarProvider, useSidebar } from "../../hooks/use-sidebar"
 import { Sidebar } from "./sidebar"
 import { Toaster } from "sonner"
 import { Header } from "./header"
+import { useTheme } from "../../hooks/use-theme"
 
 function AppShellContent() {
   const { isCollapsed } = useSidebar()
@@ -25,9 +26,11 @@ function AppShellContent() {
 }
 
 export function AppShell() {
+  const { theme } = useTheme()
   return (
     <SidebarProvider>
-        <AppShellContent />
-      </SidebarProvider>
+      <AppShellContent />
+      <Toaster richColors theme={theme} />
+    </SidebarProvider>
   )
 }
