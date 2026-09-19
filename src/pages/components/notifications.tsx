@@ -36,7 +36,7 @@ export function NotificationsPage() {
               <div className="flex flex-col gap-2 p-4 border rounded-lg bg-card overflow-hidden">
                 <span className="font-medium text-sm text-green-600 dark:text-green-500">Success</span>
                 <span className="text-xs text-muted-foreground mb-2">Confirm positive actions.</span>
-                <Button variant="outline" className="w-full text-green-600 border-green-200 hover:bg-green-50" onClick={() => toast.success('Invoice Paid', { description: 'You successfully paid the invoice for $45.00' })}>
+                <Button variant="outline" className="w-full text-green-600 dark:text-green-500 border-green-200 dark:border-green-900/50 hover:bg-green-50 dark:hover:bg-green-900/30 dark:hover:text-green-400" onClick={() => toast.success('Invoice Paid', { description: 'You successfully paid the invoice for $45.00' })}>
                   Show Success
                 </Button>
               </div>
@@ -44,7 +44,7 @@ export function NotificationsPage() {
               <div className="flex flex-col gap-2 p-4 border rounded-lg bg-card overflow-hidden">
                 <span className="font-medium text-sm text-blue-600 dark:text-blue-500">Information</span>
                 <span className="text-xs text-muted-foreground mb-2">Important neutral updates.</span>
-                <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => toast.info('Update Available', { description: 'A new version of the dashboard is ready to install.' })}>
+                <Button variant="outline" className="w-full text-blue-600 dark:text-blue-500 border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400" onClick={() => toast.info('Update Available', { description: 'A new version of the dashboard is ready to install.' })}>
                   Show Info
                 </Button>
               </div>
@@ -52,7 +52,7 @@ export function NotificationsPage() {
               <div className="flex flex-col gap-2 p-4 border rounded-lg bg-card overflow-hidden">
                 <span className="font-medium text-sm text-amber-600 dark:text-amber-500">Warning</span>
                 <span className="text-xs text-muted-foreground mb-2">Cautionary system states.</span>
-                <Button variant="outline" className="w-full text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => toast.warning('Storage Approaching Limit', { description: 'You have used 90% of your allocated 50GB storage.' })}>
+                <Button variant="outline" className="w-full text-amber-600 dark:text-amber-500 border-amber-200 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-900/30 dark:hover:text-amber-400" onClick={() => toast.warning('Storage Approaching Limit', { description: 'You have used 90% of your allocated 50GB storage.' })}>
                   Show Warning
                 </Button>
               </div>
