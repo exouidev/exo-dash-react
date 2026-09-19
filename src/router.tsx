@@ -4,6 +4,7 @@ import { AppShell } from "./components/layout/app-shell"
 import { AuthLayout } from "./components/layout/auth-layout"
 import { ProtectedRoute } from "./components/layout/protected-route"
 import { NotFoundPage } from "./pages/not-found"
+const ProComponents = React.lazy(() => import("./pages/pro-components").then(m => ({ default: m.ProComponents })))
 
 // Lazy-loaded pages
 const EcommerceDashboard = React.lazy(() => import("./pages/dashboard/ecommerce").then(m => ({ default: m.EcommerceDashboard })))
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
       { path: "modals", element: <Suspended><ModalsPage /></Suspended> },
       { path: "data-table", element: <Suspended><DataTablePage /></Suspended> },
       { path: "notifications", element: <Suspended><NotificationsPage /></Suspended> },
+      { path: "pro-components", element: <Suspended><ProComponents /></Suspended> },
       { path: "documentation", element: <Suspended><DocumentationPage /></Suspended> },
     ],
   },
