@@ -28,6 +28,7 @@ const FormsPage = React.lazy(() => import("./pages/components/forms").then(m => 
 const ProductsApp = React.lazy(() => import("./pages/apps/products").then(m => ({ default: m.ProductsApp })))
 const UsersApp = React.lazy(() => import("./pages/apps/users").then(m => ({ default: m.UsersApp })))
 
+const SettingsPage = React.lazy(() => import("./pages/settings").then(m => ({ default: m.SettingsPage })))
 const DocumentationPage = React.lazy(() => import("./pages/documentation").then(m => ({ default: m.DocumentationPage })))
 
 // Auth pages
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
       { path: "modals", element: <Suspended><ModalsPage /></Suspended> },
       { path: "data-table", element: <Suspended><DataTablePage /></Suspended> },
       { path: "notifications", element: <Suspended><NotificationsPage /></Suspended> },
+      { path: "settings", element: <Suspended><SettingsPage /></Suspended> },
       { path: "pro-components", element: <Suspended><ProComponents /></Suspended> },
       { path: "documentation", element: <Suspended><DocumentationPage /></Suspended> },
     ],

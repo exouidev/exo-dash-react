@@ -75,6 +75,7 @@ const navGroups: NavGroup[] = [
           { label: 'Forgotten Password', href: '/auth/forgot-password' }
         ]
       },
+      { label: 'Settings', href: '/settings', icon: Settings },
       { label: 'Documentation', href: '/documentation', icon: FileText }
     ]
   }
