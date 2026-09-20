@@ -1,14 +1,17 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { User, Shield, Bell, CreditCard, Upload, CheckCircle, Laptop, Smartphone, LogOut, Plus, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { Modal } from "../components/ui/modal"
+import { Skeleton } from "../components/ui/skeleton"
+import { fetchSettingsData, type SettingsData } from "../lib/mock-data/settings-mock-data"
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'billing'
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
+  const [isLoading, setIsLoading] = useState(true)
 
   const tabs: { id: SettingsTab; label: string; icon: any }[] = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -17,9 +20,27 @@ export function SettingsPage() {
     { id: 'billing', label: 'Billing', icon: CreditCard },
   ]
 
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 'pm_1', type: 'Visa', last4: '4242', expiryMonth: '12', expiryYear: '2028', isDefault: true }
-  ])
+  const [paymentMethods, setPaymentMethods] = useState<SettingsData['paymentMethods']>([])
+  const [profile, setProfile] = useState<SettingsData['profile']>({
+    firstName: '', lastName: '', email: '', username: '', bio: '', website: '', location: ''
+  })
+  const [tfaEnabled, setTfaEnabled] = useState(false)
+  const [notifs, setNotifs] = useState({ product: false, marketing: false })
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    fetchSettingsData().then(res => {
+      if (active) {
+        setProfile(res.profile);
+        setPaymentMethods(res.paymentMethods);
+        setTfaEnabled(res.tfaEnabled);
+        setNotifs(res.notifications);
+        setIsLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, []);
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
@@ -86,13 +107,6 @@ export function SettingsPage() {
     }
   }
 
-  const [profile, setProfile] = useState({
-    firstName: 'Tom', lastName: 'Developer', email: 'tom@example.com', username: 'tomdev',
-    bio: 'Frontend enthusiast building interactive dashboards. Open to collaboration.', website: 'https://react.dev', location: 'San Francisco, CA'
-  })
-
-  const [tfaEnabled, setTfaEnabled] = useState(true)
-  const [notifs, setNotifs] = useState({ product: true, marketing: false })
   const [saving, setSaving] = useState(false)
 
   const initials = ((profile.firstName?.[0] || '') + (profile.lastName?.[0] || '')).toUpperCase() || 'U'
@@ -126,270 +140,299 @@ export function SettingsPage() {
         </aside>
 
         <main className="flex-1 min-w-0 space-y-6">
-          {activeTab === 'profile' && (
-            <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          {isLoading ? (
+            <div className="grid gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Public Profile</CardTitle>
-                  <CardDescription>This is how others will see you on the site.</CardDescription>
+                  <Skeleton className="h-6 w-48 mb-2" />
+                  <Skeleton className="h-4 w-64" />
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Generic structural skeleton matching forms */}
                   <div className="flex items-center gap-6">
-                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold border-2 border-primary/20 shrink-0">
-                      {initials}
-                    </div>
+                    <Skeleton className="h-20 w-20 rounded-full" />
                     <div className="space-y-2">
-                      <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-2" /> Change Avatar</Button>
-                      <p className="text-[0.8rem] text-muted-foreground">JPG, GIF or PNG. Max size of 800K.</p>
+                      <Skeleton className="h-8 w-32" />
+                      <Skeleton className="h-3 w-48" />
                     </div>
                   </div>
-
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">First name</label>
-                      <input type="text" value={profile.firstName} onChange={e => setProfile({...profile, firstName: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Last name</label>
-                      <input type="text" value={profile.lastName} onChange={e => setProfile({...profile, lastName: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                    </div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full rounded-md" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full rounded-md" /></div>
                   </div>
-
-                  <div className="space-y-2">
-                     <label className="text-sm font-medium">Email address</label>
-                     <input type="email" disabled value={profile.email} className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed opacity-70" />
-                     <p className="text-[0.8rem] text-muted-foreground">Your email address cannot be changed from the profile panel.</p>
-                  </div>
-
-                  <div className="space-y-2">
-                     <label className="text-sm font-medium">Username</label>
-                     <div className="relative flex items-center">
-                       <span className="absolute left-3 text-muted-foreground text-sm font-mono shrink-0">@</span>
-                       <input type="text" value={profile.username} onChange={e => setProfile({...profile, username: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                     </div>
-                     <p className="text-[0.8rem] text-muted-foreground">This is your public display name.</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Bio</label>
-                    <textarea value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} rows={3} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Tell us a little bit about yourself"></textarea>
-                    <p className="text-[0.8rem] text-muted-foreground">Maximum 160 characters. You can mention other users and organizations.</p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Website</label>
-                      <input type="url" value={profile.website} onChange={e => setProfile({...profile, website: e.target.value})} placeholder="https://..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Location</label>
-                      <input type="text" value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})} placeholder="City, Country" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                    </div>
-                   </div>
-
-                   <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                  <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full rounded-md" /></div>
+                  <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-24 w-full rounded-md" /></div>
                 </CardContent>
               </Card>
             </div>
-          )}
-
-          {activeTab === 'security' && (
-            <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
-                  <CardDescription>Ensure your account is using a long, random password to stay secure.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                     <label className="text-sm font-medium">Current password</label>
-                     <input type="password" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                  </div>
-                  <div className="space-y-2">
-                     <label className="text-sm font-medium">New password</label>
-                     <input type="password" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                  </div>
-                  <Button onClick={save} disabled={saving}>{saving ? 'Updating...' : 'Update Password'}</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="space-y-1">
-                    <CardTitle>Two-Factor Authentication</CardTitle>
-                    <CardDescription>Protect your account with an extra layer of security.</CardDescription>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={tfaEnabled} onChange={e => setTfaEnabled(e.target.checked)} className="sr-only peer" />
-                    <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${tfaEnabled ? 'bg-primary' : ''}`}></div>
-                  </label>
-                </CardHeader>
-                <CardContent>
-                  {tfaEnabled ? (
-                    <p className="text-sm text-green-600 font-medium flex items-center mt-2"><CheckCircle className="h-4 w-4 mr-2" /> 2FA is currently enabled</p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground mt-2">Not configured. It is highly recommended to enable 2FA.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Sessions</CardTitle>
-                  <CardDescription>Manage and log out your active sessions on other devices.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Laptop className="h-5 w-5 text-muted-foreground" />
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium leading-none">MacBook Pro (Mac OS)</p>
-                        <p className="text-xs text-muted-foreground">Chrome - Dublin, Ireland • <span className="text-green-600 font-medium">Active now</span></p>
+          ) : (
+            <>
+              {activeTab === 'profile' && (
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Public Profile</CardTitle>
+                      <CardDescription>This is how others will see you on the site.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center gap-6">
+                        <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold border-2 border-primary/20 shrink-0">
+                          {initials}
+                        </div>
+                        <div className="space-y-2">
+                          <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-2" /> Change Avatar</Button>
+                          <p className="text-[0.8rem] text-muted-foreground">JPG, GIF or PNG. Max size of 800K.</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Smartphone className="h-5 w-5 text-muted-foreground" />
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium leading-none">iPhone 14 Pro (iOS)</p>
-                        <p className="text-xs text-muted-foreground">Safari - London, UK • 2 hours ago</p>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">First name</label>
+                          <input type="text" value={profile.firstName} onChange={e => setProfile({...profile, firstName: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Last name</label>
+                          <input type="text" value={profile.lastName} onChange={e => setProfile({...profile, lastName: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                        </div>
                       </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4" /></Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
-          {activeTab === 'notifications' && (
-            <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Notification Preferences</CardTitle>
-                   <CardDescription>Choose what we notify you about and how we deliver it.</CardDescription>
-                 </CardHeader>
-                 <CardContent className="space-y-6">
-                   <div className="space-y-4">
-                     <h4 className="text-sm font-semibold tracking-tight uppercase text-muted-foreground">Email Notifications</h4>
+                      <div className="space-y-2">
+                         <label className="text-sm font-medium">Email address</label>
+                         <input type="email" disabled value={profile.email} className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed opacity-70" />
+                         <p className="text-[0.8rem] text-muted-foreground">Your email address cannot be changed from the profile panel.</p>
+                      </div>
 
-                     <div className="flex items-center justify-between">
-                       <div className="space-y-0.5">
-                         <label className="text-sm font-medium">Security Alerts</label>
-                         <p className="text-[0.8rem] text-muted-foreground">Crucial updates about your account security.</p>
-                       </div>
-                       <label className="relative inline-flex items-center cursor-not-allowed opacity-70">
-                         <input type="checkbox" checked disabled className="sr-only peer" />
-                         <div className="w-11 h-6 bg-primary rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[24px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5"></div>
-                       </label>
-                     </div>
-
-                     <div className="flex items-center justify-between">
-                       <div className="space-y-0.5">
-                         <label className="text-sm font-medium">Product Updates</label>
-                         <p className="text-[0.8rem] text-muted-foreground">New features and available beta releases.</p>
-                       </div>
-                       <label className="relative inline-flex items-center cursor-pointer">
-                         <input type="checkbox" checked={notifs.product} onChange={e => setNotifs({...notifs, product: e.target.checked})} className="sr-only peer" />
-                         <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${notifs.product ? 'bg-primary' : ''}`}></div>
-                       </label>
-                     </div>
-
-                     <div className="flex items-center justify-between">
-                       <div className="space-y-0.5">
-                         <label className="text-sm font-medium">Marketing Emails</label>
-                         <p className="text-[0.8rem] text-muted-foreground">Promotions, discounts and marketing campaigns.</p>
-                       </div>
-                       <label className="relative inline-flex items-center cursor-pointer">
-                         <input type="checkbox" checked={notifs.marketing} onChange={e => setNotifs({...notifs, marketing: e.target.checked})} className="sr-only peer" />
-                         <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${notifs.marketing ? 'bg-primary' : ''}`}></div>
-                       </label>
-                     </div>
-                   </div>
-                 </CardContent>
-               </Card>
-            </div>
-          )}
-
-          {activeTab === 'billing' && (
-            <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
-               <Card className="border-primary/50 shadow-sm bg-primary/5">
-                 <CardHeader>
-                   <CardTitle className="flex flex-row items-center justify-between w-full">
-                     <span>Current Plan</span>
-                     <Badge variant="default" className="bg-primary">Pro Tier</Badge>
-                   </CardTitle>
-                   <CardDescription className="text-foreground/80">You are currently on the Pro plan, billed annually.</CardDescription>
-                 </CardHeader>
-                 <CardContent>
-                   <div className="space-y-2 mb-6">
-                     <div className="flex items-center justify-between text-sm">
-                       <span className="font-medium">Data Storage Usage</span>
-                       <span className="text-muted-foreground">45 GB / 100 GB</span>
-                     </div>
-                     <div className="h-2 w-full bg-background rounded-full overflow-hidden border">
-                       <div className="h-full bg-primary" style={{ width: '45%' }}></div>
-                     </div>
-                   </div>
-                   <div className="flex gap-3">
-                     <Button>Upgrade Plan</Button>
-                     <Button variant="outline" className="bg-background">Cancel Subscription</Button>
-                   </div>
-                 </CardContent>
-               </Card>
-
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Payment Method</CardTitle>
-                   <CardDescription>Manage how you pay for your subscription.</CardDescription>
-                 </CardHeader>
-                 <CardContent className="space-y-4">
-                   {paymentMethods.map(pm => (
-                     <div key={pm.id} className={`flex items-center justify-between p-4 border rounded-lg ${pm.isDefault ? 'border-primary' : ''}`}>
-                       <div className="flex items-center gap-4">
-                         <div className="h-10 w-14 bg-accent rounded flex items-center justify-center">
-                           <CreditCard className="h-5 w-5 text-foreground" />
+                      <div className="space-y-2">
+                         <label className="text-sm font-medium">Username</label>
+                         <div className="relative flex items-center">
+                           <span className="absolute left-3 text-muted-foreground text-sm font-mono shrink-0">@</span>
+                           <input type="text" value={profile.username} onChange={e => setProfile({...profile, username: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
                          </div>
-                         <div className="space-y-1">
-                           <p className="text-sm font-medium leading-none">{pm.type} ending in {pm.last4}</p>
-                           <p className="text-xs text-muted-foreground">Expires {pm.expiryMonth}/{pm.expiryYear}</p>
+                         <p className="text-[0.8rem] text-muted-foreground">This is your public display name.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Bio</label>
+                        <textarea value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} rows={3} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Tell us a little bit about yourself"></textarea>
+                        <p className="text-[0.8rem] text-muted-foreground">Maximum 160 characters. You can mention other users and organizations.</p>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Website</label>
+                          <input type="url" value={profile.website} onChange={e => setProfile({...profile, website: e.target.value})} placeholder="https://..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Location</label>
+                          <input type="text" value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})} placeholder="City, Country" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                        </div>
+                       </div>
+
+                       <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeTab === 'security' && (
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Change Password</CardTitle>
+                      <CardDescription>Ensure your account is using a long, random password to stay secure.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                         <label className="text-sm font-medium">Current password</label>
+                         <input type="password" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-sm font-medium">New password</label>
+                         <input type="password" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                      </div>
+                      <Button onClick={save} disabled={saving}>{saving ? 'Updating...' : 'Update Password'}</Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="space-y-1">
+                        <CardTitle>Two-Factor Authentication</CardTitle>
+                        <CardDescription>Protect your account with an extra layer of security.</CardDescription>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={tfaEnabled} onChange={e => setTfaEnabled(e.target.checked)} className="sr-only peer" />
+                        <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${tfaEnabled ? 'bg-primary' : ''}`}></div>
+                      </label>
+                    </CardHeader>
+                    <CardContent>
+                      {tfaEnabled ? (
+                        <p className="text-sm text-green-600 font-medium flex items-center mt-2"><CheckCircle className="h-4 w-4 mr-2" /> 2FA is currently enabled</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground mt-2">Not configured. It is highly recommended to enable 2FA.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Active Sessions</CardTitle>
+                      <CardDescription>Manage and log out your active sessions on other devices.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Laptop className="h-5 w-5 text-muted-foreground" />
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-medium leading-none">MacBook Pro (Mac OS)</p>
+                            <p className="text-xs text-muted-foreground">Chrome - Dublin, Ireland • <span className="text-green-600 font-medium">Active now</span></p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Smartphone className="h-5 w-5 text-muted-foreground" />
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-medium leading-none">iPhone 14 Pro (iOS)</p>
+                            <p className="text-xs text-muted-foreground">Safari - London, UK • 2 hours ago</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4" /></Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeTab === 'notifications' && (
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                   <Card>
+                     <CardHeader>
+                       <CardTitle>Notification Preferences</CardTitle>
+                       <CardDescription>Choose what we notify you about and how we deliver it.</CardDescription>
+                     </CardHeader>
+                     <CardContent className="space-y-6">
+                       <div className="space-y-4">
+                         <h4 className="text-sm font-semibold tracking-tight uppercase text-muted-foreground">Email Notifications</h4>
+
+                         <div className="flex items-center justify-between">
+                           <div className="space-y-0.5">
+                             <label className="text-sm font-medium">Security Alerts</label>
+                             <p className="text-[0.8rem] text-muted-foreground">Crucial updates about your account security.</p>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-not-allowed opacity-70">
+                             <input type="checkbox" checked disabled className="sr-only peer" />
+                             <div className="w-11 h-6 bg-primary rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[24px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5"></div>
+                           </label>
+                         </div>
+
+                         <div className="flex items-center justify-between">
+                           <div className="space-y-0.5">
+                             <label className="text-sm font-medium">Product Updates</label>
+                             <p className="text-[0.8rem] text-muted-foreground">New features and available beta releases.</p>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-pointer">
+                             <input type="checkbox" checked={notifs.product} onChange={e => setNotifs({...notifs, product: e.target.checked})} className="sr-only peer" />
+                             <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${notifs.product ? 'bg-primary' : ''}`}></div>
+                           </label>
+                         </div>
+
+                         <div className="flex items-center justify-between">
+                           <div className="space-y-0.5">
+                             <label className="text-sm font-medium">Marketing Emails</label>
+                             <p className="text-[0.8rem] text-muted-foreground">Promotions, discounts and marketing campaigns.</p>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-pointer">
+                             <input type="checkbox" checked={notifs.marketing} onChange={e => setNotifs({...notifs, marketing: e.target.checked})} className="sr-only peer" />
+                             <div className={`w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors ${notifs.marketing ? 'bg-primary' : ''}`}></div>
+                           </label>
                          </div>
                        </div>
-                       <div className="flex items-center gap-2">
-                         {pm.isDefault && <span className="text-xs font-medium text-primary mr-2 hidden sm:inline-block">Default</span>}
-                         <Button variant="ghost" size="sm" onClick={() => openEditPaymentModal(pm)}>Edit</Button>
-                       </div>
-                     </div>
-                   ))}
+                     </CardContent>
+                   </Card>
+                </div>
+              )}
 
-                   <Button variant="outline" className="mt-4 w-full border-dashed block" onClick={openAddPaymentModal}>
-                     <Plus className="mr-2 h-4 w-4 inline-block" /> Add new payment method
-                   </Button>
-                 </CardContent>
-               </Card>
+              {activeTab === 'billing' && (
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                   <Card className="border-primary/50 shadow-sm bg-primary/5">
+                     <CardHeader>
+                       <CardTitle className="flex flex-row items-center justify-between w-full">
+                         <span>Current Plan</span>
+                         <Badge variant="default" className="bg-primary">Pro Tier</Badge>
+                       </CardTitle>
+                       <CardDescription className="text-foreground/80">You are currently on the Pro plan, billed annually.</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                       <div className="space-y-2 mb-6">
+                         <div className="flex items-center justify-between text-sm">
+                           <span className="font-medium">Data Storage Usage</span>
+                           <span className="text-muted-foreground">45 GB / 100 GB</span>
+                         </div>
+                         <div className="h-2 w-full bg-background rounded-full overflow-hidden border">
+                           <div className="h-full bg-primary" style={{ width: '45%' }}></div>
+                         </div>
+                       </div>
+                       <div className="flex gap-3">
+                         <Button>Upgrade Plan</Button>
+                         <Button variant="outline" className="bg-background">Cancel Subscription</Button>
+                       </div>
+                     </CardContent>
+                   </Card>
 
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Billing History</CardTitle>
-                   <CardDescription>View and download your previous invoices.</CardDescription>
-                 </CardHeader>
-                 <CardContent className="p-0">
-                   {[{ id: 'INV-2026-081', date: 'August 1, 2026' }, { id: 'INV-2026-071', date: 'July 1, 2026' }].map(inv => (
-                     <div key={inv.id} className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
-                       <div className="space-y-1">
-                         <p className="text-sm font-medium leading-none">{inv.id}</p>
-                         <p className="text-xs text-muted-foreground">{inv.date}</p>
-                       </div>
-                       <div className="flex items-center gap-4">
-                         <span className="text-sm font-medium">$49.00</span>
-                         <Button variant="ghost" size="icon" title="Download Invoice"><Download className="h-4 w-4" /></Button>
-                       </div>
-                     </div>
-                   ))}
-                 </CardContent>
-               </Card>
-            </div>
+                   <Card>
+                     <CardHeader>
+                       <CardTitle>Payment Method</CardTitle>
+                       <CardDescription>Manage how you pay for your subscription.</CardDescription>
+                     </CardHeader>
+                     <CardContent className="space-y-4">
+                       {paymentMethods.map(pm => (
+                         <div key={pm.id} className={`flex items-center justify-between p-4 border rounded-lg ${pm.isDefault ? 'border-primary' : ''}`}>
+                           <div className="flex items-center gap-4">
+                             <div className="h-10 w-14 bg-accent rounded flex items-center justify-center">
+                               <CreditCard className="h-5 w-5 text-foreground" />
+                             </div>
+                             <div className="space-y-1">
+                               <p className="text-sm font-medium leading-none">{pm.type} ending in {pm.last4}</p>
+                               <p className="text-xs text-muted-foreground">Expires {pm.expiryMonth}/{pm.expiryYear}</p>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             {pm.isDefault && <span className="text-xs font-medium text-primary mr-2 hidden sm:inline-block">Default</span>}
+                             <Button variant="ghost" size="sm" onClick={() => openEditPaymentModal(pm)}>Edit</Button>
+                           </div>
+                         </div>
+                       ))}
+
+                       <Button variant="outline" className="mt-4 w-full border-dashed block" onClick={openAddPaymentModal}>
+                         <Plus className="mr-2 h-4 w-4 inline-block" /> Add new payment method
+                       </Button>
+                     </CardContent>
+                   </Card>
+
+                   <Card>
+                     <CardHeader>
+                       <CardTitle>Billing History</CardTitle>
+                       <CardDescription>View and download your previous invoices.</CardDescription>
+                     </CardHeader>
+                     <CardContent className="p-0">
+                       {[{ id: 'INV-2026-081', date: 'August 1, 2026' }, { id: 'INV-2026-071', date: 'July 1, 2026' }].map(inv => (
+                         <div key={inv.id} className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
+                           <div className="space-y-1">
+                             <p className="text-sm font-medium leading-none">{inv.id}</p>
+                             <p className="text-xs text-muted-foreground">{inv.date}</p>
+                           </div>
+                           <div className="flex items-center gap-4">
+                             <span className="text-sm font-medium">$49.00</span>
+                             <Button variant="ghost" size="icon" title="Download Invoice"><Download className="h-4 w-4" /></Button>
+                           </div>
+                         </div>
+                       ))}
+                     </CardContent>
+                   </Card>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
