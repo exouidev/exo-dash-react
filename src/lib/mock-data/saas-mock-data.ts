@@ -48,14 +48,13 @@ export const fetchSaasData = async (): Promise<SaasData> => {
       { id: 'ltv', label: 'Customer LTV', value: '$1,248.00', trend: '+$12.50', trendDirection: 'up', trendContext: 'from last quarter', isGood: true }
     ],
     events: [
-      { customer: 'Acme Corp', plan: 'Enterprise', event: 'Upgrade', mrrImpact: 15.00 }, // Scaled down for realism or let's keep original
       { customer: 'Acme Corp', plan: 'Enterprise', event: 'Upgrade', mrrImpact: 150.00 },
       { customer: 'Stark Industries', plan: 'Pro', event: 'Signup', mrrImpact: 49.00 },
       { customer: 'Wayne Ent', plan: 'Basic', event: 'Downgrade', mrrImpact: -30.00 },
       { customer: 'Globex Inc', plan: 'Pro', event: 'Cancellation', mrrImpact: -49.00 },
       { customer: 'Soylent', plan: 'Enterprise', event: 'Signup', mrrImpact: 199.00 },
       { customer: 'Initech', plan: 'Basic', event: 'Signup', mrrImpact: 19.00 },
-    ].slice(1), // Removed index 0 glitch duplicate
+    ],
     mrrChart: {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
       datasets: [
