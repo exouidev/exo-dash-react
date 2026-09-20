@@ -1,25 +1,30 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Plus, Filter, Edit, MoreHorizontal, Image as ImageIcon, Tag } from "lucide-react"
 import { Card, CardContent, CardHeader } from "../../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Button } from "../../components/ui/button"
 import { Badge } from "../../components/ui/badge"
 import { Modal } from "../../components/ui/modal"
-
-interface Product {
-  id: string
-  name: string
-  sku: string
-  category: string
-  price: number
-  stock: number
-  status: 'Active' | 'Draft' | 'Archived'
-  image: string
-}
+import { type Product, fetchProductsData } from "../../lib/mock-data/products-mock-data"
 
 export function ProductsApp() {
   const statusTabs = ['All', 'Active', 'Draft', 'Archived'] as const
   const categories = ['All Categories', 'Electronics', 'Apparel', 'Accessories', 'Home & Garden']
+
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    fetchProductsData().then(res => {
+      if (active) {
+        setProducts(res);
+        setIsLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<'All' | 'Active' | 'Draft' | 'Archived'>('All')
@@ -34,17 +39,6 @@ export function ProductsApp() {
   const [newProductPrice, setNewProductPrice] = useState<number>(0)
   const [newProductStock, setNewProductStock] = useState<number>(0)
   const [newProductStatus, setNewProductStatus] = useState<'Active' | 'Draft' | 'Archived'>('Draft')
-
-  const [products, setProducts] = useState<Product[]>([
-    { id: '1', name: 'Premium Wireless Headphones', sku: 'AUDIO-001', category: 'Electronics', price: 299.99, stock: 45, status: 'Active', image: '' },
-    { id: '2', name: 'Mechanical Keyboard Pro', sku: 'COMP-042', category: 'Electronics', price: 149.50, stock: 8, status: 'Active', image: '' },
-    { id: '3', name: 'Ergonomic Office Chair', sku: 'FURN-015', category: 'Home & Garden', price: 199.00, stock: 0, status: 'Archived', image: '' },
-    { id: '4', name: 'USB-C Hub Multiport Adapter', sku: 'COMP-050', category: 'Accessories', price: 45.00, stock: 124, status: 'Active', image: '' },
-    { id: '5', name: 'Cotton Minimalist T-Shirt', sku: 'APP-012', category: 'Apparel', price: 24.00, stock: 200, status: 'Active', image: '' },
-    { id: '6', name: 'Smart Home Hub', sku: 'ELEC-993', category: 'Electronics', price: 129.99, stock: 23, status: 'Draft', image: '' },
-    { id: '7', name: 'Leather Messenger Bag', sku: 'ACC-082', category: 'Accessories', price: 89.00, stock: 4, status: 'Active', image: '' },
-    { id: '8', name: 'Desk Planter Set', sku: 'HOME-112', category: 'Home & Garden', price: 34.50, stock: 15, status: 'Draft', image: '' },
-  ])
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -101,8 +95,8 @@ export function ProductsApp() {
           <p className="text-muted-foreground mt-1">Manage your store inventory, pricing, and availability.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">Export</Button>
-          <Button onClick={openAddModal}>
+          <Button variant="outline" disabled={isLoading}>Export</Button>
+          <Button onClick={openAddModal} disabled={isLoading}>
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Button>
         </div>
@@ -116,7 +110,8 @@ export function ProductsApp() {
                   <button
                     key={tab}
                     onClick={() => setSelectedStatus(tab)}
-                    className={`pb-2 text-sm font-medium transition-colors relative ${selectedStatus === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    disabled={isLoading}
+                    className={`pb-2 text-sm font-medium transition-colors relative disabled:opacity-50 ${selectedStatus === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     {tab}
                     {selectedStatus === tab && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary rounded-t-full"></div>}
@@ -129,7 +124,8 @@ export function ProductsApp() {
                  <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                  <input
                    type="text"
-                   className="w-full bg-transparent border-0 h-9 text-sm focus:outline-none placeholder:text-muted-foreground"
+                   disabled={isLoading}
+                   className="w-full bg-transparent border-0 h-9 text-sm focus:outline-none placeholder:text-muted-foreground disabled:opacity-50"
                    placeholder="Search products by names or SKUs..."
                    value={searchQuery}
                    onChange={e => setSearchQuery(e.target.value)}
@@ -140,14 +136,15 @@ export function ProductsApp() {
                  <select
                    onChange={e => setSelectedCategory(e.target.value)}
                    value={selectedCategory}
-                   className="h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                   disabled={isLoading}
+                   className="h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
                  >
                    {categories.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}
                  </select>
 
-                 <Button variant="outline" className="h-9 shrink-0 gap-2">
+                 <Button variant="outline" className="h-9 shrink-0 gap-2" disabled={isLoading}>
                    <Filter className="h-4 w-4" />
                    <span className="sr-only sm:not-sr-only">More Filters</span>
                  </Button>
@@ -157,7 +154,7 @@ export function ProductsApp() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
+          <Table isLoading={isLoading}>
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
@@ -214,7 +211,7 @@ export function ProductsApp() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredProducts.length === 0 && (
+              {!isLoading && filteredProducts.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">No results.</TableCell>
                 </TableRow>

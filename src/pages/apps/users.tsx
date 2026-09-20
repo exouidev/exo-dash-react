@@ -1,22 +1,16 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Filter, Edit, Trash2, MoreHorizontal, Shield, Plus, Bell } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Button } from "../../components/ui/button"
 import { Badge } from "../../components/ui/badge"
 import { Modal } from "../../components/ui/modal"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: 'Admin' | 'Manager' | 'Member'
-  status: 'Active' | 'Pending' | 'Offline'
-  lastActivity: string
-  avatar: string
-}
+import { type User, fetchUsersData } from "../../lib/mock-data/users-mock-data"
 
 export function UsersApp() {
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
   const [searchQuery, setSearchQuery] = useState('')
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -30,14 +24,17 @@ export function UsersApp() {
   const [newUserRole, setNewUserRole] = useState<'Admin' | 'Manager' | 'Member'>('Member')
   const [newUserStatus, setNewUserStatus] = useState<'Active' | 'Pending' | 'Offline'>('Active')
 
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Alice Freeman', email: 'alice@example.com', role: 'Admin', status: 'Active', lastActivity: 'Just now', avatar: 'AF' },
-    { id: '2', name: 'Bob Smith', email: 'bob@example.com', role: 'Manager', status: 'Offline', lastActivity: '2 hours ago', avatar: 'BS' },
-    { id: '3', name: 'Charlie Davis', email: 'charlie@example.com', role: 'Member', status: 'Pending', lastActivity: 'Never', avatar: 'CD' },
-    { id: '4', name: 'Diana Evans', email: 'diana@example.com', role: 'Member', status: 'Active', lastActivity: '5 mins ago', avatar: 'DE' },
-    { id: '5', name: 'Evan Frank', email: 'evan@example.com', role: 'Manager', status: 'Offline', lastActivity: 'Yesterday', avatar: 'EF' },
-    { id: '6', name: 'Fiona Gallagher', email: 'fiona@example.com', role: 'Member', status: 'Active', lastActivity: 'Just now', avatar: 'FG' },
-  ])
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    fetchUsersData().then(res => {
+      if (active) {
+        setUsers(res);
+        setIsLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, []);
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
@@ -103,7 +100,7 @@ export function UsersApp() {
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
           <p className="text-muted-foreground mt-1">Manage your team members and their account permissions here.</p>
         </div>
-        <Button onClick={openAddModal}>
+        <Button onClick={openAddModal} disabled={isLoading}>
           <Plus className="mr-2 h-4 w-4" /> Add User
         </Button>
       </div>
@@ -118,11 +115,12 @@ export function UsersApp() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text" placeholder="Search users..."
+                  disabled={isLoading}
                   value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
                 />
               </div>
-              <Button variant="outline" size="sm" className="h-9">
+              <Button variant="outline" size="sm" className="h-9" disabled={isLoading}>
                 <Filter className="mr-2 h-4 w-4" /> Filter
               </Button>
             </div>
@@ -130,7 +128,7 @@ export function UsersApp() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
+          <Table isLoading={isLoading}>
              <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
@@ -194,7 +192,7 @@ export function UsersApp() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredUsers.length === 0 && (
+              {!isLoading && filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">No results.</TableCell>
                 </TableRow>

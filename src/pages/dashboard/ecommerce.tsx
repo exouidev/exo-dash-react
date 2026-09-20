@@ -1,11 +1,13 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DollarSign, Users, CreditCard, Activity } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { useTheme } from "../../hooks/use-theme"
+import { Skeleton } from "../../components/ui/skeleton"
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js'
 import { Bar, Doughnut } from 'react-chartjs-2'
+import { type EcommerceData, fetchEcommerceData } from "../../lib/mock-data/ecommerce-mock-data"
 
 ChartJS.register( CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend )
 
@@ -15,28 +17,33 @@ export function EcommerceDashboard() {
   const textColor = isDark ? '#a1a1aa' : '#71717a'
   const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
 
-  const kpis = [
-    { id: '1', label: 'Total Revenue', value: '$45,231.89', trend: 20.1, icon: DollarSign },
-    { id: '2', label: 'Subscriptions', value: '+2,350', trend: 180.1, icon: Users },
-    { id: '3', label: 'Sales', value: '+12,234', trend: 19, icon: CreditCard },
-    { id: '4', label: 'Active Now', value: '573', trend: -2.5, icon: Activity }
-  ]
-
-  const recentTransactions = [
-    { id: 'INV001', name: 'John Doe', status: 'Completed', amount: 250.00, date: '2023-10-01' },
-    { id: 'INV002', name: 'Jane Smith', status: 'Pending', amount: 150.00, date: '2023-10-02' },
-    { id: 'INV003', name: 'Bob Johnson', status: 'Failed', amount: 350.00, date: '2023-10-03' },
-    { id: 'INV004', name: 'Alice Brown', status: 'Completed', amount: 450.00, date: '2023-10-04' },
-    { id: 'INV005', name: 'Charlie Davis', status: 'Completed', amount: 125.00, date: '2023-10-05' },
-    { id: 'INV006', name: 'Diana Evans', status: 'Pending', amount: 550.00, date: '2023-10-06' },
-    { id: 'INV007', name: 'Evan Frank', status: 'Completed', amount: 75.00, date: '2023-10-07' },
-  ]
-
+  const [data, setData] = useState<EcommerceData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const filteredTransactions = recentTransactions.filter(t => 
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    fetchEcommerceData().then((res) => {
+      if (active) {
+        setData(res);
+        setIsLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  const kpiStaticShells = [
+    { id: '1', label: 'Total Revenue', icon: DollarSign },
+    { id: '2', label: 'Subscriptions', icon: Users },
+    { id: '3', label: 'Sales', icon: CreditCard },
+    { id: '4', label: 'Active Now', icon: Activity }
+  ]
+
+  const filteredTransactions = data ? data.transactions.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.id.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5)
+  ).slice(0, 5) : []
 
   const getBadgeVariant = (status: string) => {
     switch (status) {
@@ -47,19 +54,19 @@ export function EcommerceDashboard() {
     }
   }
 
-  const revenueData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+  const revenueChartData = data ? {
+    labels: data.revenueData.labels,
     datasets: [
-      { label: 'Revenue', data: [4000, 3000, 2000, 2780, 1890, 2390, 3490], backgroundColor: '#3b82f6' }
+      { label: 'Revenue', data: data.revenueData.data, backgroundColor: '#3b82f6' }
     ]
-  }
+  } : null;
 
-  const categoryData = {
-    labels: ['Desktop', 'Mobile', 'Tablet'],
+  const categoryChartData = data ? {
+    labels: data.categoryData.labels,
     datasets: [
-      { data: [45, 35, 20], backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981'], borderWidth: 0 }
+      { data: data.categoryData.data, backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981'], borderWidth: 0 }
     ]
-  }
+  } : null;
 
   return (
     <div className="flex-1 space-y-4">
@@ -68,23 +75,36 @@ export function EcommerceDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi) => (
-          <Card key={kpi.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{kpi.label}</CardTitle>
-              <kpi.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                <span className={kpi.trend > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                  {kpi.trend > 0 ? "+" : ""}{kpi.trend}% 
-                </span>
-                {" "}from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {kpiStaticShells.map((kpi) => {
+          const kpiData = data?.kpis.find(k => k.id === kpi.id);
+          
+          return (
+            <Card key={kpi.id}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{kpi.label}</CardTitle>
+                <kpi.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {isLoading || !kpiData ? (
+                  <div className="space-y-2 mt-1 py-1">
+                    <Skeleton className="h-7 w-[100px]" />
+                    <Skeleton className="h-4 w-[140px]" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{kpiData.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className={kpiData.trend > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                        {kpiData.trend > 0 ? "+" : ""}{kpiData.trend}% 
+                      </span>
+                      {" "}from last month
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
@@ -94,19 +114,23 @@ export function EcommerceDashboard() {
             <CardDescription>Monthly revenue vs active users.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 mt-2">
-             <div className="relative w-full h-[300px]">
-               <Bar 
-                 data={revenueData} 
-                 options={{
-                   responsive: true, maintainAspectRatio: false,
-                   plugins: { legend: { display: false } },
-                   scales: { 
-                     x: { ticks: { color: textColor }, grid: { color: gridColor, display: false } }, 
-                     y: { ticks: { color: textColor }, grid: { color: gridColor } } 
-                   }
-                 }} 
-               />
-             </div>
+             {isLoading || !revenueChartData ? (
+                <Skeleton className="w-full h-[300px] rounded-xl" />
+             ) : (
+               <div className="relative w-full h-[300px]">
+                 <Bar 
+                   data={revenueChartData} 
+                   options={{
+                     responsive: true, maintainAspectRatio: false,
+                     plugins: { legend: { display: false } },
+                     scales: { 
+                       x: { ticks: { color: textColor }, grid: { color: gridColor, display: false } }, 
+                       y: { ticks: { color: textColor }, grid: { color: gridColor } } 
+                     }
+                   }} 
+                 />
+               </div>
+             )}
           </CardContent>
         </Card>
 
@@ -116,15 +140,19 @@ export function EcommerceDashboard() {
             <CardDescription>Platform distribution for visits.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 mt-2">
-             <div className="relative w-full h-[300px]">
-               <Doughnut 
-                 data={categoryData} 
-                 options={{
-                   responsive: true, maintainAspectRatio: false, cutout: '75%',
-                   plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
-                 }} 
-               />
-             </div>
+             {isLoading || !categoryChartData ? (
+                <Skeleton className="w-full h-[300px] rounded-xl" />
+             ) : (
+               <div className="relative w-full h-[300px]">
+                 <Doughnut 
+                   data={categoryChartData} 
+                   options={{
+                     responsive: true, maintainAspectRatio: false, cutout: '75%',
+                     plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
+                   }} 
+                 />
+               </div>
+             )}
           </CardContent>
         </Card>
       </div>
@@ -155,17 +183,29 @@ export function EcommerceDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransactions.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={getBadgeVariant(row.status) as any}>{row.status}</Badge>
-                  </TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell className="font-medium">${row.amount.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
+              {isLoading || !data ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[70px]" /></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                filteredTransactions.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={getBadgeVariant(row.status) as any}>{row.status}</Badge>
+                    </TableCell>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell className="font-medium">${row.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

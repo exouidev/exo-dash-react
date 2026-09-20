@@ -1,12 +1,29 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
-    </div>
-  )
+interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  isLoading?: boolean;
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, isLoading, children, ...props }, ref) => {
+    
+    // Automatically inject loading state to TableBody
+    const content = React.Children.map(children, child => {
+      if (React.isValidElement(child) && (child.type as any).displayName === 'TableBody') {
+        return React.cloneElement(child as any, { isLoading });
+      }
+      return child;
+    });
+
+    return (
+      <div className="relative w-full overflow-auto">
+        <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props}>
+          {content}
+        </table>
+      </div>
+    )
+  }
 )
 Table.displayName = "Table"
 
@@ -17,10 +34,33 @@ const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttribut
 )
 TableHeader.displayName = "TableHeader"
 
-const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
-    <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props} />
-  )
+interface TableBodyProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+  isLoading?: boolean;
+}
+
+const TableBody = React.forwardRef<HTMLTableSectionElement, TableBodyProps>(
+  ({ className, isLoading, children, ...props }, ref) => {
+    
+    if (isLoading) {
+      return (
+        <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <tr key={i} className="border-b transition-colors hover:bg-muted/50">
+              <td colSpan={100} className="p-4 align-middle">
+                 <div className="h-6 w-full animate-pulse rounded-md bg-muted/60" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      );
+    }
+
+    return (
+      <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props}>
+        {children}
+      </tbody>
+    )
+  }
 )
 TableBody.displayName = "TableBody"
 
